@@ -9,7 +9,8 @@ on:
 jobs:
   test-linux-build:
     name: Linux Build + Static Checks
-    runs-on: ubuntu-22.04
+    # better-sqlite3 has no Electron 44 prebuild, and GCC 12 or older cannot parse Electron 44's V8 headers
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
