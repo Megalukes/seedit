@@ -443,21 +443,10 @@ jobs:
           ls -la build/electron/preload.cjs || exit 1
           ls -la build/index.html || exit 1
 
-      # TEMP: forge only prints node-gyp output when the rebuild fails, so show it live while the hang is diagnosed
-      - name: Diagnose better-sqlite3 Electron rebuild (temporary)
-        shell: bash
-        timeout-minutes: 12
-        continue-on-error: true
-        working-directory: node_modules/better-sqlite3
-        run: |
-          ELECTRON_VERSION=$(node -p "require('electron/package.json').version")
-          time node ../@electron/node-gyp/bin/node-gyp.js rebuild --runtime=electron --target="$ELECTRON_VERSION" --arch=x64 --dist-url=https://electronjs.org/headers --build-from-source --verbose
-
       - name: Package Electron App
         shell: bash
-        timeout-minutes: 30
-        env:
-          DEBUG: electron-rebuild
+        # a stalled native rebuild hangs silently instead of failing, so keep the cap close to the normal run time
+        timeout-minutes: 15
         run: |
           set -o pipefail
           yarn electron-forge package 2>&1 | tee forge-output.log
