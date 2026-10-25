@@ -40,7 +40,9 @@ vi.mock('../loading-ellipsis', () => ({ default: () => null }));
 vi.mock('../markdown', () => ({ default: ({ content }: { content: string }) => createElement('p', null, content) }));
 vi.mock('../expand-button', () => ({ default: () => null }));
 vi.mock('../expando', () => ({ default: () => null }));
-vi.mock('../flair', () => ({ default: () => null }));
+vi.mock('../flair', () => ({
+  default: ({ flair, author }: { flair: { text: string }; author?: boolean }) => (author ? createElement('span', { 'data-author-flair': '' }, flair.text) : null),
+}));
 vi.mock('../label', () => ({ default: () => null }));
 vi.mock('../thumbnail', () => ({ default: () => null }));
 vi.mock('../comment-tools', () => ({
@@ -117,5 +119,18 @@ describe('Nested Reply identity', () => {
     expect(container.textContent).toContain('Pending two');
     expect(container.querySelectorAll('button')).toHaveLength(3);
     expect(consoleError.mock.calls.flat().join(' ')).not.toMatch(/same key/);
+  });
+
+  it('renders author flairs next to the author and hides them when collapsed', async () => {
+    testState.repliesByCid = {};
+    const flairedReply = { ...parent, author: { address: 'askwise.bso', flairs: [{ text: 'bot' }, { text: 'helper' }] } };
+    await act(async () => root.render(createElement(Reply, { reply: flairedReply as any })));
+
+    const authorFlairs = () => Array.from(container.querySelectorAll('[data-author-flair]')).map((element) => element.textContent);
+    expect(authorFlairs()).toEqual(['bot', 'helper']);
+
+    const collapseButton = Array.from(container.querySelectorAll('span')).find((element) => element.textContent === '[–]') as HTMLSpanElement;
+    await act(async () => collapseButton.click());
+    expect(authorFlairs()).toEqual([]);
   });
 });
