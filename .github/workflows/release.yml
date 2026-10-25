@@ -21,19 +21,30 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [x64, arm64]
-    runs-on: ubuntu-22.04
+        include:
+          - arch: x64
+            runner: ubuntu-22.04
+          # better-sqlite3 is compiled from source, which node-gyp cannot cross-compile from an x64 runner
+          - arch: arm64
+            runner: ubuntu-22.04-arm
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
     env:
-      # the runner is x64; makes the electron/download-ipfs step fetch the target arch's kubo
+      # makes the electron/download-ipfs step fetch the target arch's kubo
       SEEDIT_BUILD_ARCH: ${{ matrix.arch }}
+      # Electron 44 has no better-sqlite3 prebuild. Jammy's GCC 11/12 cannot parse its V8 headers, and a newer
+      # distro would raise the AppImage's glibc floor, so compile with jammy's clang against its own libstdc++.
+      CC: clang-15
+      CXX: clang++-15
     steps:
       # electron build
       - uses: actions/checkout@v2
         with:
           # needed for git commit history changelog
           fetch-depth: 0
+      - name: Install clang
+        run: sudo apt-get update && sudo apt-get install -y clang-15
       - name: Setup Node.js v22
         uses: actions/setup-node@v2
         with:

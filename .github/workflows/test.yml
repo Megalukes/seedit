@@ -9,8 +9,7 @@ on:
 jobs:
   test-linux-build:
     name: Linux Build + Static Checks
-    # better-sqlite3 has no Electron 44 prebuild, and GCC 12 or older cannot parse Electron 44's V8 headers
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -97,8 +96,15 @@ jobs:
           echo "=== Validating forge config can be loaded ==="
           node -e "import('./forge.config.js').then(c => console.log('Config loaded, makers:', c.default.makers?.length || 0)).catch(e => { console.error(e); process.exit(1); })"
 
+      # same toolchain as the release Linux builds; see the CC/CXX note in release.yml
+      - name: Install clang
+        run: sudo apt-get update && sudo apt-get install -y clang-15
+
       - name: Package Electron App
         timeout-minutes: 30
+        env:
+          CC: clang-15
+          CXX: clang++-15
         run: |
           set -o pipefail
           yarn electron-forge package 2>&1 | tee forge-output.log
