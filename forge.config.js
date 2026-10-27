@@ -7,10 +7,12 @@ const config = {
     appBundleId: 'seedit.desktop',
     icon: './public/icon', // electron-forge adds the correct extension per platform
 
-    // NOTE: asar is disabled because of a bug where electron-packager silently fails
-    // during asar creation with seedit's large node_modules. The app works fine without it.
-    // TODO: investigate and fix the asar creation issue
-    asar: false,
+    // tens of thousands of loose node_modules files make Squirrel's nuget pack take ~14 minutes;
+    // native modules, their shared libraries and the kubo binary stay on disk so they can be loaded and spawned
+    asar: {
+      unpack: '{*.node,*.dll,*.dylib,*.so}',
+      unpackDir: 'bin',
+    },
 
     // Exclude unnecessary files from the package
     ignore: [

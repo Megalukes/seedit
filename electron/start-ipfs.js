@@ -46,19 +46,19 @@ const getKuboPath = async () => {
 
     throw new Error(`Kubo binary download completed but '${bundledKuboPath}' was not found`);
   } else {
-    // In production, the binary is downloaded to bin/<platform>/ipfs by generateAssets hook
-    // With asar: false, files are at resources/app/ instead of resources/app.asar.unpacked
+    // In production, the binary is downloaded to bin/<platform>/ipfs by generateAssets hook,
+    // and forge's asar.unpackDir keeps bin/ outside app.asar so it can be spawned
     const appPath = process.resourcesPath;
     const binaryName = getIpfsBinaryName();
+    const unpackedPath = path.join(appPath, 'app.asar.unpacked');
 
     // Try the bin/ directory first (where generateAssets downloads binaries)
-    const binDirPath = getBundledKuboPath(path.join(appPath, 'app'));
+    const binDirPath = getBundledKuboPath(unpackedPath);
     if (fs.existsSync(binDirPath)) {
       return binDirPath;
     }
 
-    // Fallback: try app.asar.unpacked for ASAR builds (if we ever re-enable ASAR)
-    const unpackedPath = path.join(appPath, 'app.asar.unpacked');
+    // Fallback: the kubo npm module's own binary
     const kuboModulePath = path.join(unpackedPath, 'node_modules', 'kubo');
 
     // Try to import kubo from unpacked location
